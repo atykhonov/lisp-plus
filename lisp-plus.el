@@ -46,6 +46,7 @@
 ;;; Code:
 
 (require 'smart-forward)
+(require 'thingatpt)
 
 
 (defun lisp-plus-return ()
@@ -65,6 +66,30 @@
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-return-command-hook)
 
+(defun lisp-plus-insert-first-arg ()
+  (interactive)
+  (let ((bound (bounds-of-thing-at-point 'list)))
+    (goto-char (car bound))
+    (forward-char)
+    (forward-sexp 1)
+    (insert " ")))
+
+(defun lisp-plus-insert-last-arg ()
+  (interactive)
+  (let ((list (list-at-point)))
+    (forward-sexp (length list))
+    (insert " ")))
+
+(defun lisp-plus-replace-first-arg ()
+  (interactive)
+  (let ((bound (bounds-of-thing-at-point 'list)))
+    (goto-char (car bound))
+    (forward-char)
+    (forward-sexp 1)
+    (mark-sexp)
+    (delete-active-region t)
+    (insert " ")))
+  
 
 (provide 'lisp-plus)
 
