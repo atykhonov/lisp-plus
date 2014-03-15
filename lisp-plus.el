@@ -93,6 +93,14 @@
   (delete-active-region t)
   (insert " "))
 
+(defun lisp-plus-replace-last-arg ()
+  (interactive)
+  (lisp-plus-goto-last-arg)
+  (backward-sexp)
+  (mark-sexp)
+  (delete-active-region t)
+  (insert " "))
+
 
 (provide 'lisp-plus)
 
