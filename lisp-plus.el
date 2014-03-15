@@ -66,30 +66,33 @@
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-return-command-hook)
 
-(defun lisp-plus-insert-first-arg ()
-  (interactive)
+(defun lisp-plus-goto-first-arg ()
   (let ((bound (bounds-of-thing-at-point 'list)))
     (goto-char (car bound))
     (forward-char)
-    (forward-sexp 1)
-    (insert " ")))
+    (forward-sexp 1)))
+
+(defun lisp-plus-goto-last-arg ()
+  (let ((list (list-at-point)))
+    (forward-sexp (length list))))
+
+(defun lisp-plus-insert-first-arg ()
+  (interactive)
+  (lisp-plus-goto-first-arg)
+  (insert " "))
 
 (defun lisp-plus-insert-last-arg ()
   (interactive)
-  (let ((list (list-at-point)))
-    (forward-sexp (length list))
-    (insert " ")))
+  (lisp-plus-goto-last-arg)
+  (insert " "))
 
 (defun lisp-plus-replace-first-arg ()
   (interactive)
-  (let ((bound (bounds-of-thing-at-point 'list)))
-    (goto-char (car bound))
-    (forward-char)
-    (forward-sexp 1)
-    (mark-sexp)
-    (delete-active-region t)
-    (insert " ")))
-  
+  (lisp-plus-goto-first-arg)
+  (mark-sexp)
+  (delete-active-region t)
+  (insert " "))
+
 
 (provide 'lisp-plus)
 
