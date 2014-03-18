@@ -65,25 +65,19 @@
                     'lisp-plus-newline)
              (equal this-command
                     'lisp-plus-newline))
-    (delete-indentation))
+    (delete-indentation)
+    (message "Delete indentation."))
+  (when (equal (buffer-name (current-buffer)) "*scratch*")
+    (print (format "%s" last-command))
+    (print (format "%s" this-command)))
   (when (and (equal last-command
-                    'lisp-plus-insert-first-arg)
+                    'lisp-plus-first-arg-insert)
              (equal this-command
-                    'lisp-plus-insert-first-arg))
-    (setq lisp-plus-insert-mode t)
-    (when lisp-plus-insert-undo-form
-      (eval lisp-plus-insert-undo-form))
-    (setq lisp-plus-insert-undo-form nil))
-  (when (and lisp-plus-insert-mode
-             (not (equal (this-command
-                          'lisp-plus-insert-first-arg))))
-    (let ((point (point)))
-      (setq lisp-plus-insert-mode nil)
-      (undo-only)
-      (goto-char point)
-      (insert " "))))
+                    'lisp-plus-first-arg-insert))
+    (delete-backward-char 1)))
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
+(remove-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
 
 (defun lisp-plus-goto-first-arg ()
   (let ((bound (bounds-of-thing-at-point 'list)))
@@ -101,16 +95,11 @@
 
 (defun lisp-plus-first-arg-insert ()
   (interactive)
-  (lisp-plus-goto-next-arg)
+  (lisp-plus-goto-next-up-or-down-list)
   (lisp-plus-goto-first-arg)
-  (insert " ")
-  ;; (let ((undo-form nil))
-  ;;   (when (looking-at ""
-  ;; (setq lisp-plus-insert-undo-form '()))
-)
+  (insert " "))
 
 (defun lisp-plus-first-arg-replace ()
-  (interactive)
   (lisp-plus-goto-first-arg)
   (mark-sexp)
   (delete-active-region t)
@@ -167,34 +156,27 @@
                     up-list-point
                     down-list-point))))
 
-
 (defun lisp-plus-goto-next-up-or-down-list ()
-  (interactive)
-  (let* ((point (point))
-         (sexp-point (point-max))
-         (up-list-point (point-max))
-         (down-list-point (point-max)))
+  (let ((point (point))
+        (last-point nil)
+        (next-point nil)
+        (arg-point nil)
+        (continue t))
     (save-excursion
-      (condition-case nil
-          (progn
-            (forward-sexp 1)
-            (setq sexp-point (point)))
-        (error nil))
-      (goto-char point)
-      (condition-case nil
-          (progn
-            (up-list)
-            (setq up-list-point (point)))
-        (error nil))
-      (goto-char point)
-      (condition-case nil
-          (progn
-            (down-list)
-            (setq down-list-point (point)))
-        (error nil)))
-    (goto-char (min sexp-point
-                    up-list-point
-                    down-list-point))))
+      (while continue
+        (lisp-plus-goto-next-arg)
+        (when (equal last-point (point))
+          (setq continue nil))
+        (when continue
+          (setq arg-point (point))
+          (lisp-plus-goto-first-arg)
+          (when (> (point) point)
+            (setq continue nil)
+            (setq next-point (point)))
+          (goto-char arg-point))
+        (setq last-point (point))))
+    (goto-char next-point)))
+
 
 (provide 'lisp-plus)
 
