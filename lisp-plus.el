@@ -65,11 +65,7 @@
                     'lisp-plus-newline)
              (equal this-command
                     'lisp-plus-newline))
-    (delete-indentation)
-    (message "Delete indentation."))
-  ;; (when (equal (buffer-name (current-buffer)) "*scratch*")
-  ;;   (print (format "%s" last-command))
-  ;;   (print (format "%s" this-command)))
+    (delete-indentation))
   (when (and (equal last-command
                     'lisp-plus-first-arg-insert)
              (equal this-command
