@@ -74,9 +74,8 @@
     (while continue
       (condition-case nil
           (progn
-            (forward-sexp)
-            (setq continue nil))
-        (error nil)))))
+            (forward-sexp))
+        (error (setq continue nil))))))
 
 (defun lisp-plus-insert-first-arg ()
   (interactive)
