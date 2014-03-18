@@ -89,6 +89,11 @@
   (delete-active-region t)
   (insert " "))
 
+(defun lisp-plus-first-arg-newline ()
+  (interactive)
+  (lisp-plus-goto-first-arg)
+  (newline-and-indent))
+
 (defun lisp-plus-last-arg-insert ()
   (interactive)
   (lisp-plus-goto-last-arg)
@@ -101,6 +106,11 @@
   (mark-sexp)
   (delete-active-region t)
   (insert " "))
+
+(defun lisp-plus-last-arg-newline ()
+  (interactive)
+  (lisp-plus-goto-last-arg)
+  (newline-and-indent))
 
 (defun lisp-plus-goto-next-arg ()
   (interactive)
