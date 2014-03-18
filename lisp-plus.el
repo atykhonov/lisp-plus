@@ -46,7 +46,7 @@
 (require 'thingatpt)
 
 
-(defun lisp-plus-return ()
+(defun lisp-plus-newline ()
   "Breaks the code line depending on context."
   (interactive)
   (lisp-plus-goto-next-arg)
@@ -56,9 +56,9 @@
   "Hook for `pre-command-hook'."
   (interactive)
   (when (and (equal last-command
-                    'lisp-plus-return)
+                    'lisp-plus-newline)
              (equal this-command
-                    'lisp-plus-return))
+                    'lisp-plus-newline))
     (delete-indentation)))
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-return-command-hook)
@@ -77,24 +77,24 @@
             (forward-sexp))
         (error (setq continue nil))))))
 
-(defun lisp-plus-insert-first-arg ()
+(defun lisp-plus-first-arg-insert ()
   (interactive)
   (lisp-plus-goto-first-arg)
   (insert " "))
 
-(defun lisp-plus-insert-last-arg ()
-  (interactive)
-  (lisp-plus-goto-last-arg)
-  (insert " "))
-
-(defun lisp-plus-replace-first-arg ()
+(defun lisp-plus-first-arg-replace ()
   (interactive)
   (lisp-plus-goto-first-arg)
   (mark-sexp)
   (delete-active-region t)
   (insert " "))
 
-(defun lisp-plus-replace-last-arg ()
+(defun lisp-plus-last-arg-insert ()
+  (interactive)
+  (lisp-plus-goto-last-arg)
+  (insert " "))
+
+(defun lisp-plus-last-arg-replace ()
   (interactive)
   (lisp-plus-goto-last-arg)
   (backward-sexp)
@@ -129,6 +129,7 @@
     (goto-char (min sexp-point
                     up-list-point
                     down-list-point))))
+
 
 (provide 'lisp-plus)
 
