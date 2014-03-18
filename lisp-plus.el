@@ -26,10 +26,8 @@
 
 ;;; Installation
 
-;; First of all please install the required dependency `smart-forward'
-;; (Read: https://github.com/magnars/smart-forward.el)
 ;;
-;; Then assuming that you cloned `lisp-plus' to the
+;; Assuming that you cloned `lisp-plus' to the
 ;; `~/.emacs.d/lisp-plus/' folder. Add the following lines to your
 ;; `.emacs' file:
 ;;
@@ -45,14 +43,13 @@
 
 ;;; Code:
 
-(require 'smart-forward)
 (require 'thingatpt)
 
 
 (defun lisp-plus-return ()
   "Breaks the code line depending on context."
   (interactive)
-  (smart-forward)
+  (lisp-plus-goto-next-arg)
   (newline-and-indent))
 
 (defun lisp-plus-pre-return-command-hook ()
@@ -101,6 +98,33 @@
   (delete-active-region t)
   (insert " "))
 
+(defun lisp-plus-goto-next-arg ()
+  (interactive)
+  (let* ((point (point))
+         (sexp-point (point-max))
+         (up-list-point (point-max))
+         (down-list-point (point-max)))
+    (save-excursion
+      (condition-case nil
+          (progn
+            (forward-sexp 1)
+            (setq sexp-point (point)))
+        (error nil))
+      (goto-char point)
+      (condition-case nil
+          (progn
+            (up-list)
+            (setq up-list-point (point)))
+        (error nil))
+      (goto-char point)
+      (condition-case nil
+          (progn
+            (down-list)
+            (setq down-list-point (point)))
+        (error nil)))
+    (goto-char (min sexp-point
+                    up-list-point
+                    down-list-point))))
 
 (provide 'lisp-plus)
 
