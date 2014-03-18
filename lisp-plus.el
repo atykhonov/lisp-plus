@@ -45,23 +45,45 @@
 
 (require 'thingatpt)
 
+
 
-(defun lisp-plus-newline ()
-  "Breaks the code line depending on context."
-  (interactive)
-  (lisp-plus-goto-next-arg)
+(defvar lisp-plus-insert-undo-form nil)
+
+(defvar lisp-plus-insert-mode nil)
+
+
+(defun lisp-plus-newline () 
+  "Breaks the code line depending on context." 
+  (interactive) 
+  (lisp-plus-goto-next-arg) 
   (newline-and-indent))
 
-(defun lisp-plus-pre-return-command-hook ()
+(defun lisp-plus-pre-command-hook ()
   "Hook for `pre-command-hook'."
   (interactive)
   (when (and (equal last-command
                     'lisp-plus-newline)
              (equal this-command
                     'lisp-plus-newline))
-    (delete-indentation)))
+    (delete-indentation))
+  (when (and (equal last-command
+                    'lisp-plus-insert-first-arg)
+             (equal this-command
+                    'lisp-plus-insert-first-arg))
+    (setq lisp-plus-insert-mode t)
+    (when lisp-plus-insert-undo-form
+      (eval lisp-plus-insert-undo-form))
+    (setq lisp-plus-insert-undo-form nil))
+  (when (and lisp-plus-insert-mode
+             (not (equal (this-command
+                          'lisp-plus-insert-first-arg))))
+    (let ((point (point)))
+      (setq lisp-plus-insert-mode nil)
+      (undo-only)
+      (goto-char point)
+      (insert " "))))
 
-(add-hook 'pre-command-hook 'lisp-plus-pre-return-command-hook)
+(add-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
 
 (defun lisp-plus-goto-first-arg ()
   (let ((bound (bounds-of-thing-at-point 'list)))
@@ -79,8 +101,13 @@
 
 (defun lisp-plus-first-arg-insert ()
   (interactive)
+  (lisp-plus-goto-next-arg)
   (lisp-plus-goto-first-arg)
-  (insert " "))
+  (insert " ")
+  ;; (let ((undo-form nil))
+  ;;   (when (looking-at ""
+  ;; (setq lisp-plus-insert-undo-form '()))
+)
 
 (defun lisp-plus-first-arg-replace ()
   (interactive)
