@@ -70,8 +70,13 @@
     (forward-sexp 1)))
 
 (defun lisp-plus-goto-last-arg ()
-  (let ((list (list-at-point)))
-    (forward-sexp (length list))))
+  (let ((continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (setq continue nil))
+        (error nil)))))
 
 (defun lisp-plus-insert-first-arg ()
   (interactive)
