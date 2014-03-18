@@ -67,14 +67,16 @@
                     'lisp-plus-newline))
     (delete-indentation)
     (message "Delete indentation."))
-  (when (equal (buffer-name (current-buffer)) "*scratch*")
-    (print (format "%s" last-command))
-    (print (format "%s" this-command)))
+  ;; (when (equal (buffer-name (current-buffer)) "*scratch*")
+  ;;   (print (format "%s" last-command))
+  ;;   (print (format "%s" this-command)))
   (when (and (equal last-command
                     'lisp-plus-first-arg-insert)
              (equal this-command
                     'lisp-plus-first-arg-insert))
-    (delete-backward-char 1)))
+    (when lisp-plus-insert-undo-form
+      (eval lisp-plus-insert-undo-form)
+      (setq lisp-plus-insert-undo-form nil))))
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
 (remove-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
@@ -83,7 +85,8 @@
   (let ((bound (bounds-of-thing-at-point 'list)))
     (goto-char (car bound))
     (forward-char)
-    (forward-sexp 1)))
+    (when (not (null (symbol-at-point)))
+      (forward-sexp 1))))
 
 (defun lisp-plus-goto-last-arg ()
   (let ((continue t))
@@ -97,7 +100,12 @@
   (interactive)
   (lisp-plus-goto-next-up-or-down-list)
   (lisp-plus-goto-first-arg)
-  (insert " "))
+  (insert " ")
+  (if (looking-back "( ")
+      (progn
+        (backward-char)
+        (setq lisp-plus-insert-undo-form '(delete-forward-char 1)))
+    (setq lisp-plus-insert-undo-form '(delete-backward-char 1))))
 
 (defun lisp-plus-first-arg-replace ()
   (lisp-plus-goto-first-arg)
@@ -158,7 +166,7 @@
 
 (defun lisp-plus-goto-next-up-or-down-list ()
   (let ((point (point))
-        (last-point nil)
+        (last-point (point))
         (next-point nil)
         (arg-point nil)
         (continue t))
