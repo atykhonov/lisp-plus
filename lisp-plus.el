@@ -168,6 +168,34 @@
                     down-list-point))))
 
 
+(defun lisp-plus-goto-next-up-or-down-list ()
+  (interactive)
+  (let* ((point (point))
+         (sexp-point (point-max))
+         (up-list-point (point-max))
+         (down-list-point (point-max)))
+    (save-excursion
+      (condition-case nil
+          (progn
+            (forward-sexp 1)
+            (setq sexp-point (point)))
+        (error nil))
+      (goto-char point)
+      (condition-case nil
+          (progn
+            (up-list)
+            (setq up-list-point (point)))
+        (error nil))
+      (goto-char point)
+      (condition-case nil
+          (progn
+            (down-list)
+            (setq down-list-point (point)))
+        (error nil)))
+    (goto-char (min sexp-point
+                    up-list-point
+                    down-list-point))))
+
 (provide 'lisp-plus)
 
 ;;; lisp-plus.el ends here
