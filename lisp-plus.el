@@ -106,7 +106,7 @@
 (defun lisp-plus-first-arg-replace ()
   (lisp-plus-goto-first-arg)
   (mark-sexp)
-  (delete-active-region t)
+  (delete-active-region)
   (insert " "))
 
 (defun lisp-plus-first-arg-delete ()
