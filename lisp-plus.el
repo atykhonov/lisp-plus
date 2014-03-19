@@ -51,6 +51,9 @@
 
 (defvar lisp-plus-insert-mode nil)
 
+(defvar lisp-plus-replace-undo-form nil)
+
+(defvar lisp-plus-replace-undo-string nil)
 
 (defun lisp-plus-newline () 
   "Breaks the code line depending on context." 
@@ -72,7 +75,14 @@
                     'lisp-plus-first-arg-insert))
     (when lisp-plus-insert-undo-form
       (eval lisp-plus-insert-undo-form)
-      (setq lisp-plus-insert-undo-form nil))))
+      (setq lisp-plus-insert-undo-form nil)))
+  (when (and (equal last-command
+                    'lisp-plus-first-arg-replace)
+             (equal this-command
+                    'lisp-plus-first-arg-replace))
+    (when lisp-plus-replace-undo-form
+      (eval lisp-plus-replace-undo-form)
+      (setq lisp-plus-replace-undo-form nil))))
 
 (add-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
 (remove-hook 'pre-command-hook 'lisp-plus-pre-command-hook)
@@ -105,8 +115,15 @@
 
 (defun lisp-plus-first-arg-replace ()
   (interactive)
+  (lisp-plus-goto-next-up-or-down-list)
   (lisp-plus-goto-first-arg)
   (mark-sexp)
+  (setq lisp-plus-replace-undo-string (buffer-substring-no-properties (region-beginning) (region-end)))
+  (setq lisp-plus-replace-undo-form '(progn
+                                       (let ((point (point)))
+                                         (delete-backward-char 1)
+                                         (insert lisp-plus-replace-undo-string)
+                                         (goto-char point))))
   (delete-active-region)
   (insert " "))
 
