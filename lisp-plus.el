@@ -104,6 +104,7 @@
     (setq lisp-plus-insert-undo-form '(delete-backward-char 1))))
 
 (defun lisp-plus-first-arg-replace ()
+  (interactive)
   (lisp-plus-goto-first-arg)
   (mark-sexp)
   (delete-active-region)
