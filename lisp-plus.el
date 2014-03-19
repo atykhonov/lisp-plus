@@ -130,7 +130,7 @@
   (lisp-plus-goto-last-arg)
   (backward-sexp)
   (mark-sexp)
-  (delete-active-region t)
+  (delete-active-region)
   (insert " "))
 
 (defun lisp-plus-last-arg-delete ()
