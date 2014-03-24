@@ -212,6 +212,112 @@
         (setq last-point (point))))
     (goto-char next-point)))
 
+(defun lisp-plus-visual-edit ()
+  (interactive)
+  (let ((bound (bounds-of-thing-at-point 'list)))
+    (goto-char (car bound))
+    (set-mark (cdr bound))))
+
+(defun lisp-plus-nav-up ()
+  (interactive)
+  (if (region-active-p)
+      (let ((sexp-point nil))
+        (condition-case nil
+            (progn
+              (backward-sexp)
+              (setq sexp-point (point)))
+          (error nil))
+        (when sexp-point
+          (deactivate-mark)
+          (forward-char)
+          (let ((bound (bounds-of-thing-at-point 'list)))
+            (goto-char (car bound))
+            (set-mark (cdr bound)))))
+    (when lisp-plus-saved-up
+      (funcall lisp-plus-saved-up))))
+
+(defun lisp-plus-nav-down ()
+  (interactive)
+  (if (region-active-p)
+      (let ((sexp-point nil))
+        (condition-case nil
+            (progn
+              (forward-sexp 2)
+              (setq sexp-point (point)))
+          (error nil))
+        (when sexp-point
+          (deactivate-mark)
+          (backward-char)
+          (let ((bound (bounds-of-thing-at-point 'list)))
+            (goto-char (car bound))
+            (set-mark (cdr bound)))))
+    (when lisp-plus-saved-down
+      (funcall lisp-plus-saved-down))))
+
+(defun lisp-plus-nav-left ()
+  (interactive)
+  (if (region-active-p)
+      (let ((sexp-point nil))
+        (condition-case nil
+            (progn
+              (up-list)
+              (setq sexp-point (point)))
+          (error nil))
+        (when sexp-point
+          (deactivate-mark)
+          (backward-char)
+          (let ((bound (bounds-of-thing-at-point 'list)))
+            (goto-char (car bound))
+            (set-mark (cdr bound)))))
+    (when lisp-plus-saved-left
+      (funcall lisp-plus-saved-left))))
+
+(defun lisp-plus-nav-right ()
+  (interactive)
+  (if (region-active-p)
+      (let ((sexp-point nil))
+        (save-excursion
+          (condition-case nil
+              (progn
+                (down-list 2)
+                (setq sexp-point (point)))
+            (error nil)))
+        (when sexp-point
+          (goto-char sexp-point)
+          (deactivate-mark)
+          (let ((bound (bounds-of-thing-at-point 'list)))
+            (goto-char (car bound))
+            (set-mark (cdr bound)))))
+    (when lisp-plus-saved-right
+      (funcall lisp-plus-saved-right))))
+
+(defvar lisp-plus-saved-up (key-binding (kbd "H-t")))
+
+(defvar lisp-plus-saved-down (key-binding (kbd "H-h")))
+
+(defvar lisp-plus-saved-right (key-binding (kbd "H-n")))
+
+(defvar lisp-plus-saved-left (key-binding (kbd "H-d")))
+
+(define-minor-mode lisp-plus-visual
+  "Toggle Hungry mode.
+     ...rest of documentation as before..."
+  ;; The initial value.
+  :init-value nil
+  ;; The indicator for the mode line.
+  :lighter " LP"
+  ;; The minor mode bindings.
+  :keymap
+  (let ((map (make-sparse-keymap)))
+    ;; vertical motion keys move up and down tree
+    (define-key map (kbd "H-t") 'lisp-plus-nav-up)
+    (define-key map (kbd "H-h") 'lisp-plus-nav-down)
+    (define-key map (kbd "H-d") 'lisp-plus-nav-left)
+    (define-key map (kbd "H-n") 'lisp-plus-nav-right)
+    map)
+  :group 'lisp-plus
+  (lisp-plus-visual-edit))
+
 
 (provide 'lisp-plus)
 
