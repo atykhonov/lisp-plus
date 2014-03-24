@@ -244,7 +244,7 @@
             (progn
               (forward-sexp 2)
               (setq sexp-point (point)))
-          (error nil))
+          (error (lisp-plus-nav-right)))
         (when sexp-point
           (deactivate-mark)
           (backward-char)
