@@ -244,7 +244,25 @@
             (progn
               (forward-sexp 2)
               (setq sexp-point (point)))
-          (error (lisp-plus-nav-right)))
+          (error 
+           (let ((continue t)
+                 (beg (region-beginning))
+                 (end (region-end))
+                 (next-point nil))
+             (while continue
+               (condition-case nil
+                   (up-list)
+                 (error (setq continue nil)))
+               (setq next-point (point))
+               (condition-case nil
+                   (progn
+                     (forward-sexp)
+                     (if (> (point) end)
+                         (progn
+                           (setq sexp-point (point))
+                           (setq continue nil))
+                       (goto-char next-point)))
+                 (error nil))))))
         (when sexp-point
           (deactivate-mark)
           (backward-char)
@@ -290,6 +308,8 @@
             (set-mark (cdr bound)))))
     (when lisp-plus-saved-right
       (funcall lisp-plus-saved-right))))
+
+;; (defun lisp-plus-nav-next
 
 (defvar lisp-plus-saved-up (key-binding (kbd "H-t")))
 
