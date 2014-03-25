@@ -55,6 +55,18 @@
 
 (defvar lisp-plus-replace-undo-string nil)
 
+(defvar lisp-plus-saved-up (key-binding (kbd "H-t")))
+
+(defvar lisp-plus-saved-down (key-binding (kbd "H-h")))
+
+(defvar lisp-plus-saved-inner-down (key-binding (kbd "H-H")))
+
+(defvar lisp-plus-saved-right (key-binding (kbd "H-n")))
+
+(defvar lisp-plus-saved-left (key-binding (kbd "H-d")))
+
+
+
 (defun lisp-plus-newline () 
   "Breaks the code line depending on context." 
   (interactive) 
@@ -290,34 +302,29 @@
     (when lisp-plus-saved-left
       (funcall lisp-plus-saved-left))))
 
-(defun lisp-plus-nav-right ()
+(defun lisp-plus-nav-inner-down ()
   (interactive)
   (if (region-active-p)
       (let ((sexp-point nil))
         (save-excursion
           (condition-case nil
+              (down-list)
+            (error (lisp-plus-nav-down)))
+          (condition-case nil
               (progn
-                (down-list 2)
+                (down-list)
                 (setq sexp-point (point)))
-            (error nil)))
+            (error (lisp-plus-nav-down))))
         (when sexp-point
           (goto-char sexp-point)
           (deactivate-mark)
           (let ((bound (bounds-of-thing-at-point 'list)))
             (goto-char (car bound))
             (set-mark (cdr bound)))))
-    (when lisp-plus-saved-right
-      (funcall lisp-plus-saved-right))))
+    (when lisp-plus-saved-inner-down
+      (funcall lisp-plus-saved-inner-down))))
 
 ;; (defun lisp-plus-nav-next
-
-(defvar lisp-plus-saved-up (key-binding (kbd "H-t")))
-
-(defvar lisp-plus-saved-down (key-binding (kbd "H-h")))
-
-(defvar lisp-plus-saved-right (key-binding (kbd "H-n")))
-
-(defvar lisp-plus-saved-left (key-binding (kbd "H-d")))
 
 (define-minor-mode lisp-plus-visual
   "Toggle Hungry mode.
@@ -332,10 +339,14 @@
     ;; vertical motion keys move up and down tree
     (define-key map (kbd "H-t") 'lisp-plus-nav-up)
     (define-key map (kbd "H-h") 'lisp-plus-nav-down)
+    (define-key map (kbd "H-H") 'lisp-plus-nav-inner-down)
     (define-key map (kbd "H-d") 'lisp-plus-nav-left)
     (define-key map (kbd "H-n") 'lisp-plus-nav-right)
     map)
   :group 'lisp-plus
+  (if (and (boundp 'flymake-mode) flymake-mode)
+      (message "flymake-mode is on")
+  (message "flymake-mode is off"))
   (lisp-plus-visual-edit))
 
 
