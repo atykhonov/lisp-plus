@@ -326,7 +326,12 @@
 
 ;; (defun lisp-plus-nav-next
 
-(define-minor-mode lisp-plus-visual
+(defun lisp-plus-keyboard-quit ()
+  (interactive)
+  (lisp-plus-minor-mode 0)
+  (deactivate-mark))
+
+(define-minor-mode lisp-plus-minor-mode
   "Toggle Hungry mode.
      ...rest of documentation as before..."
   ;; The initial value.
@@ -335,19 +340,25 @@
   :lighter " LP"
   ;; The minor mode bindings.
   :keymap
-  (let ((map (make-sparse-keymap)))
-    ;; vertical motion keys move up and down tree
-    (define-key map (kbd "H-t") 'lisp-plus-nav-up)
-    (define-key map (kbd "H-h") 'lisp-plus-nav-down)
-    (define-key map (kbd "H-H") 'lisp-plus-nav-inner-down)
-    (define-key map (kbd "H-d") 'lisp-plus-nav-left)
-    (define-key map (kbd "H-n") 'lisp-plus-nav-right)
-    map)
+  (if lisp-plus-minor-mode
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "H-t") 'lisp-plus-nav-up)
+        (define-key map (kbd "H-h") 'lisp-plus-nav-down)
+        (define-key map (kbd "H-H") 'lisp-plus-nav-inner-down)
+        (define-key map (kbd "H-d") 'lisp-plus-nav-left)
+        (define-key map (kbd "H-n") 'lisp-plus-nav-right)
+        (define-key map (kbd "C-g") 'lisp-plus-keyboard-quit)
+        map)
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "H-t") 'lisp-plus-saved-up)
+      (define-key map (kbd "H-h") 'lisp-plus-saved-down)
+      (define-key map (kbd "H-H") 'lisp-plus-saved-inner-down)
+      (define-key map (kbd "H-d") 'lisp-plus-saved-left)
+      (define-key map (kbd "H-n") 'lisp-plus-saved-right)
+      map))
   :group 'lisp-plus
-  (if (and (boundp 'flymake-mode) flymake-mode)
-      (message "flymake-mode is on")
-  (message "flymake-mode is off"))
-  (lisp-plus-visual-edit))
+  (when lisp-plus-minor-mode
+    (lisp-plus-visual-edit)))
 
 
 (provide 'lisp-plus)
