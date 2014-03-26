@@ -57,6 +57,8 @@
 
 (defvar lisp-plus-saved-up (key-binding (kbd "H-t")))
 
+(defvar lisp-plus-saved-inner-up (key-binding (kbd "H-T")))
+
 (defvar lisp-plus-saved-down (key-binding (kbd "H-h")))
 
 (defvar lisp-plus-saved-inner-down (key-binding (kbd "H-H")))
@@ -324,9 +326,43 @@
     (when lisp-plus-saved-inner-down
       (funcall lisp-plus-saved-inner-down))))
 
+(defun lisp-plus-nav-inner-up ()
+  (interactive)
+  (if (region-active-p)
+      (let ((sexp-point nil)
+            (continue t)
+            (saved-point (point))
+            (bound nil)
+            (count 0)
+            (bounds-beg nil)
+            (bounds-end nil)
+            (max-bound-beg 0)
+            (region-begin (region-beginning))
+            (region-end (region-end)))
+        (save-excursion
+          (while continue
+            (setq count (+ count 1))
+            (backward-char)
+            (setq bound (bounds-of-thing-at-point 'list))
+            (if (car bound)
+                (when (> (car bound) max-bound-beg)
+                  (setq max-bound-beg (car bound)))
+              (setq continue nil))
+            (when (> count 500)
+              (setq continue nil))))
+        (setq sexp-point (+ max-bound-beg 1))
+        (when sexp-point
+          (goto-char sexp-point)
+          (deactivate-mark)
+          (let ((bound (bounds-of-thing-at-point 'list)))
+            (goto-char (car bound))
+            (set-mark (cdr bound)))))
+    (when lisp-plus-saved-inner-up
+      (funcall lisp-plus-saved-inner-up))))
+
 (defun lisp-plus-keyboard-quit ()
   (interactive)
-  (lisp-plus-minor-mode 0)
+  (lisp-plus-minor-mode -1)
   (deactivate-mark))
 
 (define-minor-mode lisp-plus-minor-mode
@@ -335,6 +371,7 @@
   (if (null lisp-plus-minor-mode)
       (let ((map (make-sparse-keymap)))
         (define-key map (kbd "H-t") 'lisp-plus-nav-up)
+        (define-key map (kbd "H-T") 'lisp-plus-nav-inner-up)
         (define-key map (kbd "H-h") 'lisp-plus-nav-down)
         (define-key map (kbd "H-H") 'lisp-plus-nav-inner-down)
         (define-key map (kbd "H-d") 'lisp-plus-nav-left)
@@ -343,6 +380,7 @@
         map)
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "H-t") 'lisp-plus-saved-up)
+      (define-key map (kbd "H-T") 'lisp-plus-saved-inner-up)
       (define-key map (kbd "H-h") 'lisp-plus-saved-down)
       (define-key map (kbd "H-H") 'lisp-plus-saved-inner-down)
       (define-key map (kbd "H-d") 'lisp-plus-saved-left)
