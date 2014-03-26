@@ -307,18 +307,25 @@
 (defun lisp-plus-nav-inner-down ()
   (interactive)
   (if (region-active-p)
-      (let ((sexp-point nil))
+      (let ((sexp-point (point-max))
+            (continue t)
+            (bound nil)
+            (count 0)
+            (orig-point (point)))
         (save-excursion
-          (condition-case nil
-              (down-list)
-            (error (lisp-plus-nav-down)))
-          (condition-case nil
-              (progn
-                (down-list)
-                (setq sexp-point (point)))
-            (error (lisp-plus-nav-down))))
+          (while continue
+            (setq count (+ count 1))
+            (forward-char)
+            (setq bound (bounds-of-thing-at-point 'list))
+            (if (car bound)
+                (when (and (> (car bound) orig-point)
+                           (< (car bound) sexp-point))
+                  (setq sexp-point (car bound)))
+              (setq continue nil))
+            (when (> count 500)
+              (setq continue nil))))
         (when sexp-point
-          (goto-char sexp-point)
+          (goto-char (+ sexp-point 1))
           (deactivate-mark)
           (let ((bound (bounds-of-thing-at-point 'list)))
             (goto-char (car bound))
