@@ -226,12 +226,6 @@
         (setq last-point (point))))
     (goto-char next-point)))
 
-(defun lisp-plus-visual-edit ()
-  (interactive)
-  (let ((bound (bounds-of-thing-at-point 'list)))
-    (goto-char (car bound))
-    (set-mark (cdr bound))))
-
 (defun lisp-plus-nav-up ()
   (interactive)
   (if (region-active-p)
@@ -388,7 +382,9 @@
       map))
   :group 'lisp-plus
   (when lisp-plus-minor-mode
-    (lisp-plus-visual-edit)))
+    (let ((bound (bounds-of-thing-at-point 'list)))
+      (goto-char (car bound))
+      (set-mark (cdr bound)))))
 
 
 (provide 'lisp-plus)
