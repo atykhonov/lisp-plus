@@ -332,15 +332,9 @@
   (deactivate-mark))
 
 (define-minor-mode lisp-plus-minor-mode
-  "Toggle Hungry mode.
-     ...rest of documentation as before..."
-  ;; The initial value.
-  :init-value nil
-  ;; The indicator for the mode line.
   :lighter " LP"
-  ;; The minor mode bindings.
   :keymap
-  (if lisp-plus-minor-mode
+  (if (null lisp-plus-minor-mode)
       (let ((map (make-sparse-keymap)))
         (define-key map (kbd "H-t") 'lisp-plus-nav-up)
         (define-key map (kbd "H-h") 'lisp-plus-nav-down)
