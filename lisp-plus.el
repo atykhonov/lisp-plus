@@ -324,8 +324,6 @@
     (when lisp-plus-saved-inner-down
       (funcall lisp-plus-saved-inner-down))))
 
-;; (defun lisp-plus-nav-next
-
 (defun lisp-plus-keyboard-quit ()
   (interactive)
   (lisp-plus-minor-mode 0)
