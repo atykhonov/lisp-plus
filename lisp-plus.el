@@ -67,6 +67,14 @@
 
 (defvar lisp-plus-saved-left (key-binding (kbd "H-d")))
 
+(defvar lisp-plus-saved-i (key-binding (kbd "i")))
+
+(defvar lisp-plus-saved-I (key-binding (kbd "I")))
+
+(defvar lisp-plus-insert-arg-num 0)
+
+(defvar lisp-plus-fake-cursor nil)
+
 
 
 (defun lisp-plus-newline () 
@@ -298,6 +306,27 @@
     (when lisp-plus-saved-left
       (funcall lisp-plus-saved-left))))
 
+(defun lisp-plus-point-inner-down ()
+  (interactive)
+  (let ((sexp-point (point-max)) ;; change (point-max) to nil
+        (continue t)
+        (bound nil)
+        (count 0)
+        (orig-point (point)))
+    (save-excursion
+      (while continue
+        (setq count (+ count 1))
+        (forward-char)
+        (setq bound (bounds-of-thing-at-point 'list))
+        (if (car bound)
+            (when (and (> (car bound) orig-point)
+                       (< (car bound) sexp-point))
+              (setq sexp-point (car bound)))
+          (setq continue nil))
+        (when (> count 500)
+          (setq continue nil))))
+    sexp-point))
+
 (defun lisp-plus-nav-inner-down ()
   (interactive)
   (if (region-active-p)
@@ -357,7 +386,118 @@
 (defun lisp-plus-keyboard-quit ()
   (interactive)
   (lisp-plus-minor-mode -1)
+  (setq lisp-plus-insert-arg-num 0)
   (deactivate-mark))
+
+(defun lisp-plus-insert-arg ()
+  (interactive)
+  (let ((reg-beg (region-beginning))
+        (reg-end (region-end)))
+    (save-excursion
+      ;; (deactivate-mark)
+      (when lisp-plus-fake-cursor
+        (delete-overlay lisp-plus-fake-cursor))
+      (forward-char)
+      (setq lisp-plus-insert-arg-num
+            (+ lisp-plus-insert-arg-num 1))
+      (forward-sexp lisp-plus-insert-arg-num)
+      (setq lisp-plus-fake-cursor
+            (mc/create-fake-cursor-at-point))
+      ;; (goto-char reg-beg)
+      ;; (set-mark reg-beg)
+      ;; (set-mark reg-end)
+      ;; (redisplay t)
+      )))
+
+(defun mc/make-cursor-overlay-at-eol (pos)
+  "Create overlay to look like cursor at end of line."
+  (let ((overlay (make-overlay pos pos nil nil nil)))
+    (overlay-put overlay 'after-string (propertize " " 'face 'mc/cursor-face))
+    overlay))
+
+(defun mc/make-cursor-overlay-inline (pos)
+  "Create overlay to look like cursor inside text."
+  (let ((overlay (make-overlay pos (1+ pos) nil nil nil)))
+    (overlay-put overlay 'face 'mc/cursor-face)
+    overlay))
+
+(defun mc/make-cursor-overlay-at-point ()
+  "Create overlay to look like cursor.
+Special case for end of line, because overlay over a newline
+highlights the entire width of the window."
+  (if (eolp)
+      (mc/make-cursor-overlay-at-eol (point))
+    (mc/make-cursor-overlay-inline (point))))
+
+(defun mc/create-fake-cursor-at-point (&optional id)
+  "Add a fake cursor and possibly a fake active region overlay based on point and mark.
+Saves the current state in the overlay to be restored later."
+  (let ((overlay (mc/make-cursor-overlay-at-point)))
+    (overlay-put overlay 'type 'fake-cursor)
+    (overlay-put overlay 'priority 100)
+    overlay))
+
+(defun lisp-plus-point-in-string ()
+  "Return non-nil if point is inside string or documentation string."
+  (ignore-errors
+    (save-excursion
+      (nth 3 (syntax-ppss (point))))))
+
+(defun lisp-plus-arg-insert ()
+  (interactive)
+  (if (lisp-plus-point-in-string)
+      (when lisp-plus-saved-I
+        (funcall lisp-plus-saved-I))
+    (progn
+      ;; (when (equal last-command 'lisp-plus-arg-insert)
+      ;;   (delete-backward-char 1))
+      (condition-case nil
+          (forward-sexp)
+        (error (progn (goto-char (+ (lisp-plus-point-inner-down) 1))
+                      (forward-sexp))))
+      ;; (insert " ")
+      )))
+
+(defun lisp-plus-inner-arg-insert ()
+  (interactive)
+  (let ((try-more t)
+        (up-list-point (point-max))
+        (down-list-point (point-max))
+        (forward-sexp-point (point-max))
+        (sexp-point (point-max))
+        (inner-down-point (point-max)))
+    (if (lisp-plus-point-in-string)
+        (when lisp-plus-saved-I
+          (funcall lisp-plus-saved-I))
+      (progn
+        (save-excursion
+          (condition-case nil
+              (progn
+                (down-list)
+                (setq down-list-point (point)))
+            (error nil)))
+        (save-excursion
+          (condition-case nil
+              (progn
+                (forward-sexp)
+                (setq forward-sexp-point (point)))
+            (error nil)))
+        (save-excursion
+          (condition-case nil
+              (progn
+                (up-list)
+                (setq up-list-point (point)))
+            (error nil)))
+        (setq inner-down-point
+              (+ (lisp-plus-point-inner-down) 1))
+        (goto-char (min down-list-point
+                        forward-sexp-point
+                        up-list-point
+                        inner-down-point))))))
+
+(defun lisp-plus-indent ()
+  (interactive)
+  (indent-region))
 
 (define-minor-mode lisp-plus-minor-mode
   :lighter " LP"
@@ -371,6 +511,8 @@
         (define-key map (kbd "H-d") 'lisp-plus-nav-left)
         (define-key map (kbd "H-n") 'lisp-plus-nav-right)
         (define-key map (kbd "C-g") 'lisp-plus-keyboard-quit)
+        (define-key map (kbd "i") 'lisp-plus-insert-arg)
+        (define-key map (kbd "I") 'lisp-plus-arg-insert)
         map)
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "H-t") 'lisp-plus-saved-up)
@@ -379,12 +521,17 @@
       (define-key map (kbd "H-H") 'lisp-plus-saved-inner-down)
       (define-key map (kbd "H-d") 'lisp-plus-saved-left)
       (define-key map (kbd "H-n") 'lisp-plus-saved-right)
+      (define-key map (kbd "i") 'lisp-plus-saved-i)
+      (define-key map (kbd "I") 'lisp-plus-saved-I)
       map))
   :group 'lisp-plus
-  (when lisp-plus-minor-mode
-    (let ((bound (bounds-of-thing-at-point 'list)))
-      (goto-char (car bound))
-      (set-mark (cdr bound)))))
+  (setq lisp-plus-insert-arg-num 0)
+  (if lisp-plus-minor-mode
+      (let ((bound (bounds-of-thing-at-point 'list)))
+        (goto-char (car bound))
+        (set-mark (cdr bound)))
+    (when lisp-plus-fake-cursor
+      (delete-overlay lisp-plus-fake-cursor))))
 
 
 (provide 'lisp-plus)
